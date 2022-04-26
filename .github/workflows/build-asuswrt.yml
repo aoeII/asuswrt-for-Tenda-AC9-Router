@@ -33,18 +33,15 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          docker rmi `docker images -q`
-          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
-          sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* adoptopenjdk* mysql* php* mongodb* dotnet* moby* snapd* || true
-          sudo -E apt-get update
-          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler antlr3 gperf swig
-          sudo -E apt-get -y install 
-          sudo -E apt-get install --no-install-recommends autoconf automake bash bison bzip2 diffutils file flex g++ gawk gcc-multilib gettext gperf groff-base libncurses-dev libexpat1-dev libslang2 libssl-dev libtool libxml-parser-perl make patch perl pkg-config python sed shtool tar texinfo unzip zlib1g zlib1g-dev
-          sudo -E apt-get install lib32stdc++6 lib32z1-dev
-          sudo -E apt-get --no-install-recommends install automake1.11
-          sudo -E apt-get -y install libelf-dev:i386 libelf1:i386
-          sudo -E apt-get --no-install-recommends install lib32z1-dev lib32stdc++6
-          sudo -E apt-get -y install intltool autopoint vim imagemagick pngquant cmake
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804)
+          sudo -E apt-get -qq install --no-install-recommends autoconf automake bash bison bzip2 diffutils file flex g++ gawk gcc-multilib gettext gperf groff-base libncurses-dev libexpat1-dev libslang2 libssl-dev libtool libxml-parser-perl make patch perl pkg-config python sed shtool tar texinfo unzip zlib1g zlib1g-dev
+          sudo -E apt-get -qq install lib32stdc++6 lib32z1-dev
+          sudo -E apt-get -qq --no-install-recommends install automake1.11
+          sudo -E apt-get -qq install libelf-dev libelf1
+          sudo -E apt-get -qq --no-install-recommends install lib32z1-dev lib32stdc++6
+          sudo -E apt-get -qq install intltool autopoint vim imagemagick pngquant cmake
           sudo -E apt-get -y autoremove --purge
           sudo -E apt-get clean
           df -h
