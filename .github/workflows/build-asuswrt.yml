@@ -29,7 +29,7 @@ jobs:
         with:
           ref: master
 
-      - name: Space cleanup
+      - name: package installation
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -42,47 +42,51 @@ jobs:
           sudo -E apt-get -qq install libelf-dev libelf1
           sudo -E apt-get -qq --no-install-recommends install lib32z1-dev lib32stdc++6
           sudo -E apt-get -qq install intltool autopoint vim imagemagick pngquant cmake
-          sudo -E apt-get -y autoremove --purge
-          sudo -E apt-get clean
-          df -h
-
-      - name: Compile firmware
-        working-directory: ./
-        run: |
-          export PATH=$PATH:./release/src-rt-9.x/src/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
-          cd ./release/src-rt-9.x/src/
-          make RT-AC1200G+ 2>&1 | tee -a ./build.log
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
           echo "======================="
           echo "Space usage:"
           echo "======================="
           df -h
           echo "======================="
 
-      - name: Prepare artifact
+      - name: Compile firmware
         run: |
-          mkdir -p ./artifact/firmware
-          mkdir -p ./artifact/buildinfo
-          cp -rf $(find ./release/src-rt-9.x/src/image/ -type f) ./artifact/firmware/
-          cp -rf $(find ./ -type f -name "*.log") ./artifact/buildinfo/
+          export PATH=$PATH:$GITHUB_WORKSPACE/release/src-rt-9.x/src/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
+          cd $GITHUB_WORKSPACE/release/src-rt-9.x/src/
+          make defconfig
+          make RT-AC1200G+
+          echo "======================="
+          echo "Space usage:"
+          echo "======================="
+          df -h
+          echo "======================="
+
+      - name: Prepare artifact   
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/artifact/firmware
+          mkdir -p $GITHUB_WORKSPACE/artifact/buildinfo
+          cp -rf $(find $GITHUB_WORKSPACE/release/src-rt-9.x/src/image/ -type f) $GITHUB_WORKSPACE/artifact/firmware/
+          cp -rf $(find $GITHUB_WORKSPACE/ -type f -name "*.log") $GITHUB_WORKSPACE/artifact/buildinfo/
 
       - name: Deliver buildinfo
         uses: actions/upload-artifact@v2
         with:
           name: asuswrt_buildinfo
-          path: ./artifact/buildinfo/
+          path: $GITHUB_WORKSPACE/artifact/buildinfo/
 
       - name: Deliver firmware
         uses: actions/upload-artifact@v2
         with:
           name: asuswrt_firmware
-          path: ./artifact/firmware/  
+          path: $GITHUB_WORKSPACE/artifact/firmware/  
 
       - name: Upload release asset
         if: github.event == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.YOURTOKEN }}
-          file: ./artifact/firmware/*
+          file: $GITHUB_WORKSPACE/artifact/firmware/*
           tag: ${{ github.ref }}
           file_glob: true
 
