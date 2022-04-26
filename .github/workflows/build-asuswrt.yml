@@ -1,0 +1,90 @@
+# This is a basic workflow to help you get started with Actions
+
+name: asuswrt-CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  repository_dispatch:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    name: Build asuswrt firmware for Tenda AC9 Router
+
+    runs-on: ubuntu-18.04
+
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Space cleanup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          docker rmi `docker images -q`
+          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+          sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* adoptopenjdk* mysql* php* mongodb* dotnet* moby* snapd* || true
+          sudo -E apt-get update
+          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler antlr3 gperf swig
+          sudo -E apt-get -y install 
+          sudo -E apt-get install --no-install-recommends autoconf automake bash bison bzip2 diffutils file flex g++ gawk gcc-multilib gettext gperf groff-base libncurses-dev libexpat1-dev libslang2 libssl-dev libtool libxml-parser-perl make patch perl pkg-config python sed shtool tar texinfo unzip zlib1g zlib1g-dev
+          sudo -E apt-get install lib32stdc++6 lib32z1-dev
+          sudo -E apt-get --no-install-recommends install automake1.11
+          sudo -E apt-get -y install libelf-dev:i386 libelf1:i386
+          sudo -E apt-get --no-install-recommends install lib32z1-dev lib32stdc++6
+          sudo -E apt-get -y install intltool autopoint vim imagemagick pngquant cmake
+          sudo -E apt-get -y autoremove --purge
+          sudo -E apt-get clean
+          df -h
+
+      - name: Compile firmware
+        working-directory: ./release/src-rt-9.x/src/
+        run: |
+          export PATH=$PATH:./toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
+          make RT-AC1200G+ 2>&1 | tee -a ./build.log
+          echo "======================="
+          echo "Space usage:"
+          echo "======================="
+          df -h
+          echo "======================="
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p ./artifact/firmware
+          mkdir -p ./artifact/buildinfo
+          cp -rf $(find ./release/src-rt-9.x/src/image/ -type f) ./artifact/firmware/
+          cp -rf $(find ./ -type f -name "*.log") ./artifact/buildinfo/
+
+      - name: Deliver buildinfo
+        uses: actions/upload-artifact@v2
+        with:
+          name: asuswrt_buildinfo
+          path: ./artifact/buildinfo/
+
+      - name: Deliver firmware
+        uses: actions/upload-artifact@v2
+        with:
+          name: asuswrt_firmware
+          path: ./artifact/firmware/  
+
+      - name: Upload release asset
+        if: github.event == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.YOURTOKEN }}
+          file: ./artifact/firmware/*
+          tag: ${{ github.ref }}
+          file_glob: true
+
