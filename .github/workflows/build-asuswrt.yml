@@ -53,7 +53,9 @@ jobs:
       - name: Compile firmware
         run: |
           export PATH=$PATH:$GITHUB_WORKSPACE/release/src-rt-9.x/src/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
+          echo $PATH
           cd $GITHUB_WORKSPACE/release/src-rt-9.x/src/
+          pwd
           make defconfig
           make RT-AC1200G+
           echo "======================="
