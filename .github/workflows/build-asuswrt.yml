@@ -47,9 +47,10 @@ jobs:
           df -h
 
       - name: Compile firmware
-        working-directory: ./release/src-rt-9.x/src/
+        working-directory: ./
         run: |
-          export PATH=$PATH:./toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
+          export PATH=$PATH:./release/src-rt-9.x/src/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/bin
+          cd ./release/src-rt-9.x/src/
           make RT-AC1200G+ 2>&1 | tee -a ./build.log
           echo "======================="
           echo "Space usage:"
